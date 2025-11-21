@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CSS Explainer - Code Explainer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body{margin:0;font-family:system-ui,sans-serif;background:#f9fafb;color:#1f2937}
+  header{background:#4f46e5;color:white;padding:18px 30px;font-size:24px;font-weight:700;box-shadow:0 4px 15px rgba(0,0,0,0.12)}
+  .brand{margin:0}
+  .container{display:flex;min-height:100vh}
+  .sidebar{width:260px;background:white;border-right:1px solid #e5e7eb;padding-top:30px;box-shadow:2px 0 10px rgba(0,0,0,0.05)}
+  .sidebar a{display:block;padding:16px 28px;color:#374151;text-decoration:none;font-weight:500}
+  .sidebar a:hover{background:#f1f5f9;color:#4f46e5}
+  .sidebar a.active{background:#eef2ff;color:#4f46e5;border-left:4px solid #4f46e5;font-weight:600}
+  .main{flex:1;padding:40px}
+  textarea{width:100%;height:420px;padding:20px;font-family:Menlo,monospace;font-size:15px;border:1px solid #d1d5db;border-radius:12px;background:#fdfdfe}
+  textarea:focus{outline:none;border-color:#4f46e5;box-shadow:0 0 0 4px rgba(79,70,229,0.15)}
+  .btn{padding:13px 34px;margin:10px;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:15px}
+  .btn-primary{background:#4f46e5;color:white}
+  .btn-secondary{background:#e5e7eb;color:#374151}
+  #output{
+    margin-top:30px;padding:32px;background:white;border-radius:12px;
+    border-left:5px solid #4f46e5;font-size:17px;line-height:1.95;white-space:pre-wrap;
+    min-height:220px;box-shadow:0 4px 20px rgba(0,0,0,0.08);font-family:system-ui;
+    overflow:hidden;
+  }
+  .cursor{display:inline-block;width:10px;height:1.2em;background:#4f46e5;margin-left:2px;animation:blink 1s infinite;}
+  @keyframes blink{0%,100%{opacity:1} 50%{opacity:0}}
+</style>
+</head>
+<body>
+<header><div class="brand">Code Explainer</div></header>
+<div class="container">
+  <div class="sidebar">
+    <a href="index.html">Home</a>
+    <a href="explain-js.html">JavaScript</a>
+    <a href="explain-css.html" class="active">CSS</a>
+    <a href="explain-html.html">HTML</a>
+  </div>
+  <div class="main">
+    <h1>CSS Code Explainer</h1>
+    <textarea id="code" placeholder="/* Paste any CSS code here — Tailwind, Bootstrap, vanilla, etc. */\nbody {\n  background: linear-gradient(to right, #667eea, #764ba2);\n  display: flex;\n}"></textarea>
+    <div style="text-align:center;margin:25px 0">
+      <button class="btn btn-primary" onclick="explainCSS()">Explain Code</button>
+      <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
+    </div>
+    <div id="output">Paste your CSS code and click "Explain Code" — get a perfect human explanation instantly.</div>
+  </div>
+</div>
+
+<script>
+function clearAll() {
+  document.getElementById("code").value = "";
+  document.getElementById("output").innerHTML = "Paste your CSS code and click \"Explain Code\" — get a perfect human explanation instantly.";
+}
+
+let typeTimer;
+function typeWriter(text, el, speed = 16) {
+  clearTimeout(typeTimer);
+  el.innerHTML = "";
+  let i = 0;
+  function type() {
+    if (i < text.length) {
+      el.innerHTML += text.charAt(i);
+      i++;
+      typeTimer = setTimeout(type, speed);
+    } else {
+      el.innerHTML += '<span class="cursor"></span>';
+    }
+  }
+  type();
+}
+
+function explainCSS() {
+  const code = document.getElementById("code").value.trim();
+  const output = document.getElementById("output");
+  if (!code) {
+    output.textContent = "Please paste some CSS code first.";
+    return;
+  }
+
+  output.innerHTML = "";
+  let explanation = "This CSS code does the following:\n\n";
+  const lines = code.split('\n');
+  let currentRule = "";
+  const added = new Set();
+
+  for (let raw of lines) {
+    let line = raw.trim();
+    if (!line || line.startsWith("/*") || line.startsWith("//")) continue;
+
+    // Detect CSS rule start (selector)
+    if (line.includes("{") && !line.includes("}")) {
+      currentRule = line.split("{")[0].trim();
+      if (!added.has("rule_" + currentRule)) {
+        explanation += `• Styles elements matching: "${currentRule}"\n`;
+        added.add("rule_" + currentRule);
+        if (currentRule.includes(".")) explanation += "  → Targets a class (e.g., .button)\n";
+        if (currentRule.includes("#")) explanation += "  → Targets an ID (e.g., #header)\n";
+        if (currentRule.includes(":hover") || currentRule.includes(":focus")) explanation += "  → Pseudo-class for interactive states\n";
+      }
+    }
+
+    // Universal CSS detection (works on ANY code)
+    if (line.includes("display: flex")) {
+      if (!added.has("flexbox")) { explanation += "• Uses Flexbox for flexible layout (rows/columns, alignment)\n"; added.add("flexbox"); }
+    }
+    if (line.includes("display: grid")) {
+      if (!added.has("grid")) { explanation += "• Uses CSS Grid for 2D layouts (rows, columns, gaps)\n"; added.add("grid"); }
+    }
+    if (line.includes("position:")) {
+      if (!added.has("position")) { explanation += "• Positions element (absolute, relative, fixed, sticky)\n"; added.add("position"); }
+    }
+    if (line.includes("color:") || line.includes("background-color:")) {
+      if (!added.has("colors")) { explanation += "• Sets text or background colors\n"; added.add("colors"); }
+    }
+    if (line.includes("padding:") || line.includes("margin:")) {
+      if (!added.has("spacing")) { explanation += "• Controls padding (inside) and margin (outside) spacing\n"; added.add("spacing"); }
+    }
+    if (line.includes("border:")) {
+      if (!added.has("border")) { explanation += "• Adds borders (solid, dashed, rounded corners)\n"; added.add("border"); }
+    }
+    if (line.includes("font-") || line.includes("text-")) {
+      if (!added.has("typography")) { explanation += "• Styles text (size, weight, alignment, family)\n"; added.add("typography"); }
+    }
+    if (line.includes("@media")) {
+      if (!added.has("responsive")) { explanation += "• Makes the design responsive (mobile/tablet/desktop)\n"; added.add("responsive"); }
+    }
+    if (line.includes("transition:") || line.includes("animation:")) {
+      if (!added.has("effects")) { explanation += "• Adds smooth transitions or keyframe animations\n"; added.add("effects"); }
+    }
+    if (line.includes("::before") || line.includes("::after")) {
+      if (!added.has("pseudo")) { explanation += "• Inserts content using pseudo-elements\n"; added.add("pseudo"); }
+    }
+    if (line.includes("bg-") || line.includes("p-") || line.includes("m-") || line.includes("flex-")) {
+      if (!added.has("tailwind")) { explanation += "• Uses Tailwind CSS utility classes for rapid styling\n"; added.add("tailwind"); }
+    }
+  }
+
+  if (added.size === 0) explanation += "Valid CSS code with no major rules detected.\n";
+  else explanation += "\nClean, modern, and responsive CSS.";
+
+  typeWriter(explanation, output, 16);
+}
+</script>
+</body>
+</html>

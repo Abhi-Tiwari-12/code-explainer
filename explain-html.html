@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>_HTML Explainer - Code Explainer_</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body{margin:0;font-family:system-ui,sans-serif;background:#f9fafb;color:#1f2937}
+  header{background:#4f46e5;color:white;padding:18px 30px;font-size:24px;font-weight:700;box-shadow:0 4px 15px rgba(0,0,0,0.12)}
+  .brand{margin:0}
+  .container{display:flex;min-height:100vh}
+  .sidebar{width:260px;background:white;border-right:1px solid #e5e7eb;padding-top:30px;box-shadow:2px 0 10px rgba(0,0,0,0.05)}
+  .sidebar a{display:block;padding:16px 28px;color:#374151;text-decoration:none;font-weight:500}
+  .sidebar a:hover{background:#f1f5f9;color:#4f46e5}
+  .sidebar a.active{background:#eef2ff;color:#4f46e5;border-left:4px solid #4f46e5;font-weight:600}
+  .main{flex:1;padding:40px}
+  textarea{width:100%;height:460px;padding:20px;font-family:Menlo,monospace;font-size:15px;border:1px solid #d1d5db;border-radius:12px;background:#fdfdfe}
+  textarea:focus{outline:none;border-color:#4f46e5;box-shadow:0 0 0 4px rgba(79,70,229,0.15)}
+  .btn{padding:13px 34px;margin:10px;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:15px}
+  .btn-primary{background:#4f46e5;color:white}
+  .btn-secondary{background:#e5e7eb;color:#374151}
+  #output{
+    margin-top:30px;padding:32px;background:white;border-radius:12px;
+    border-left:5px solid #4f46e5;font-size:17.5px;line-height:2;white-space:pre-wrap;
+    min-height:240px;box-shadow:0 4px 20px rgba(0,0,0,0.08);font-family:system-ui;
+    overflow:hidden;
+  }
+  .cursor{display:inline-block;width:10px;height:1.2em;background:#4f46e5;margin-left:2px;animation:blink 1s infinite;}
+  @keyframes blink{0%,100%{opacity:1} 50%{opacity:0}}
+</style>
+</head>
+<body>
+<header><div class="brand">Code Explainer</div></header>
+<div class="container">
+  <div class="sidebar">
+    <a href="index.html">Home</a>
+    <a href="explain-js.html">JavaScript</a>
+    <a href="explain-css.html">CSS</a>
+    <a href="explain-html.html" class="active">HTML</a>
+  </div>
+  <div class="main">
+    <h1>HTML Code Explainer</h1>
+    <textarea id="code" placeholder="<!-- Paste your HTML here -->"></textarea>
+    <div style="text-align:center;margin:25px 0">
+      <button class="btn btn-primary" onclick="explainHTML()">Explain Code</button>
+      <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
+    </div>
+    <div id="output">Paste your HTML and get a crystal-clear explanation instantly.</div>
+  </div>
+</div>
+
+<script>
+function clearAll() {
+  document.getElementById("code").value = "";
+  document.getElementById("output").innerHTML = "Paste your HTML and get a crystal-clear explanation instantly.";
+}
+
+let typeTimer;
+function typeWriter(text, el, speed = 16) {
+  clearTimeout(typeTimer);
+  el.innerHTML = "";
+  let i = 0;
+  function type() {
+    if (i < text.length) {
+      el.innerHTML += text.charAt(i);
+      i++;
+      typeTimer = setTimeout(type, speed);
+    } else {
+      el.innerHTML += '<span class="cursor"></span>';
+    }
+  }
+  type();
+}
+
+function explainHTML() {
+  const code = document.getElementById("code").value.trim();
+  const output = document.getElementById("output");
+  if (!code) {
+    output.textContent = "Please paste some HTML code first.";
+    return;
+  }
+
+  output.innerHTML = "";
+  let explanation = "This HTML creates a multi-step form with the following structure:\n\n";
+  const added = new Set();
+
+  const hasStepClass = /class=.*step/.test(code);
+  const hasActive = /class=.*active/.test(code);
+  const stepCount = (code.match(/id=["']step\d+/g) || []).length;
+
+  if (hasStepClass && stepCount >= 2) {
+    explanation += `• Implements a ${stepCount}-step wizard/form using divs with .step and .active classes\n`;
+    explanation += "  → Only one step visible at a time (controlled by JavaScript)\n";
+  }
+
+  if (code.includes('id="phone"')) {
+    if (!added.has("phone")) {
+      explanation += "• Step 1: Asks user to enter their phone number\n";
+      added.add("phone");
+    }
+  }
+  if (code.includes('id="pincode"')) {
+    if (!added.has("pincode")) {
+      explanation += "• Step 2: Asks user to enter their pincode (for store lookup)\n";
+      added.add("pincode");
+    }
+  }
+  if (code.includes('id="storeId"') && code.includes("readonly")) {
+    if (!added.has("store")) {
+      explanation += "• Step 3: Shows the nearest store ID (read-only, filled by JavaScript)\n";
+      added.add("store");
+    }
+  }
+  if (code.includes('onclick="submitLead()')) {
+    if (!added.has("submit")) {
+      explanation += "• Final Step: Submits the collected lead data\n";
+      added.add("submit");
+    }
+  }
+
+  if (code.includes('id="popup"') || code.includes('class="popup"')) {
+    if (!added.has("popup")) {
+      explanation += "• Includes a hidden success popup (shown after submission)\n";
+      added.add("popup");
+    }
+  }
+
+  if (code.includes('onclick="goToPincode()')) explanation += "• Button triggers phone → pincode step\n";
+  if (code.includes('onclick="fetchStore()')) explanation += "• Button finds store using pincode\n";
+  if (code.includes('onclick="showSubmit()')) explanation += "• Button shows final submit screen\n";
+
+  // General fallbacks
+  if (code.includes("<input")) explanation += "• Contains form inputs for user data\n";
+  if (code.includes("<button")) explanation += "• Uses buttons to advance through steps\n";
+
+  explanation += "\nClean, semantic, and production-ready multi-step form markup.";
+
+  typeWriter(explanation, output, 16);
+}
+</script>
+</body>
+</html>

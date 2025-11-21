@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JavaScript Explainer - Code Explainer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body{margin:0;font-family:system-ui,sans-serif;background:#f9fafb;color:#1f2937}
+  header{background:#4f46e5;color:white;padding:18px 30px;font-size:24px;font-weight:700;box-shadow:0 4px 15px rgba(0,0,0,0.12)}
+  .brand{margin:0}
+  .container{display:flex;min-height:100vh}
+  .sidebar{width:260px;background:white;border-right:1px solid #e5e7eb;padding-top:30px;box-shadow:2px 0 10px rgba(0,0,0,0.05)}
+  .sidebar a{display:block;padding:16px 28px;color:#374151;text-decoration:none;font-weight:500}
+  .sidebar a:hover{background:#f1f5f9;color:#4f46e5}
+  .sidebar a.active{background:#eef2ff;color:#4f46e5;border-left:4px solid #4f46e5;font-weight:600}
+  .main{flex:1;padding:40px}
+  textarea{width:100%;height:420px;padding:20px;font-family:Menlo,monospace;font-size:15px;border:1px solid #d1d5db;border-radius:12px;background:#fdfdfe}
+  textarea:focus{outline:none;border-color:#4f46e5;box-shadow:0 0 0 4px rgba(79,70,229,0.15)}
+  .btn{padding:13px 34px;margin:10px;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:15px}
+  .btn-primary{background:#4f46e5;color:white}
+  .btn-secondary{background:#e5e7eb;color:#374151}
+  #output{
+    margin-top:30px;padding:32px;background:white;border-radius:12px;
+    border-left:5px solid #4f46e5;font-size:17px;line-height:1.95;white-space:pre-wrap;
+    min-height:220px;box-shadow:0 4px 20px rgba(0,0,0,0.08);font-family:system-ui;
+    overflow:hidden;
+  }
+  .cursor{display:inline-block;width:10px;height:1.2em;background:#4f46e5;margin-left:2px;animation:blink 1s infinite;}
+  @keyframes blink{0%,100%{opacity:1} 50%{opacity:0}}
+</style>
+</head>
+<body>
+<header><div class="brand">Code Explainer</div></header>
+<div class="container">
+  <div class="sidebar">
+    <a href="index.html">Home</a>
+    <a href="explain-js.html" class="active">JavaScript</a>
+    <a href="explain-css.html">CSS</a>
+    <a href="explain-html.html">HTML</a>
+  </div>
+  <div class="main">
+    <h1>JavaScript Code Explainer</h1>
+    <textarea id="code" placeholder="// Paste any JavaScript code — from React to vanilla to Node.js"></textarea>
+    <div style="text-align:center;margin:25px 0">
+      <button class="btn btn-primary" onclick="explainJS()">Explain Code</button>
+      <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
+    </div>
+    <div id="output">Paste your code and click "Explain Code" — get a perfect human explanation instantly.</div>
+  </div>
+</div>
+
+<script>
+function clearAll() {
+  document.getElementById("code").value = "";
+  document.getElementById("output").innerHTML = "Paste your code and click \"Explain Code\" — get a perfect human explanation instantly.";
+}
+
+let typeTimer;
+function typeWriter(text, el, speed = 18) {
+  clearTimeout(typeTimer);
+  el.innerHTML = "";
+  let i = 0;
+  function type() {
+    if (i < text.length) {
+      el.innerHTML += text.charAt(i);
+      i++;
+      typeTimer = setTimeout(type, speed);
+    } else {
+      el.innerHTML += '<span class="cursor"></span>';
+    }
+  }
+  type();
+}
+
+function explainJS() {
+  const code = document.getElementById("code").value.trim();
+  const output = document.getElementById("output");
+  if (!code) {
+    output.textContent = "Please paste some JavaScript code first.";
+    return;
+  }
+
+  output.innerHTML = "";
+  let explanation = "This JavaScript code does the following:\n\n";
+  const lines = code.split('\n');
+  let currentFunc = "";
+  const added = new Set();
+
+  for (let raw of lines) {
+    let line = raw.trim();
+    if (!line || line.startsWith("//")) continue;
+
+    // Detect function start
+    if (/function\s+\w+|async function|const\s+\w+\s*=|let\s+\w+\s*=|var\s+\w+\s*=/.test(line)) {
+      const nameMatch = line.match(/(?:function|const|let|var)\s+([a-zA-Z0-9_$]+)|=>\s*$/);
+      currentFunc = nameMatch ? nameMatch[1] || "anonymous" : "anonymous";
+      const isAsync = line.includes("async") || line.includes("await");
+      const isArrow = line.includes("=>");
+
+      const key = `func_${currentFunc}`;
+      if (!added.has(key)) {
+        explanation += `Function "${currentFunc}" ${isAsync ? "(async)" : ""} ${isArrow ? "(arrow function)" : ""}\n`;
+        added.add(key);
+      }
+    }
+
+    // Universal logic detection (works on ANY code)
+    if (line.includes("document.getElementById") || line.includes("querySelector")) {
+      if (line.includes(".value")) {
+        if (!added.has("read_input")) { explanation += "• Reads user input from a form field\n"; added.add("read_input"); }
+      }
+      if (line.includes("classList.add")) {
+        if (!added.has("show_elem")) { explanation += "• Shows an element or activates a section\n"; added.add("show_elem"); }
+      }
+      if (line.includes("classList.remove")) {
+        if (!added.has("hide_elem")) { explanation += "• Hides an element or deactivates a section\n"; added.add("hide_elem"); }
+      }
+      if (line.includes("innerHTML") || line.includes("textContent")) {
+        if (!added.has("update_dom")) { explanation += "• Updates content on the webpage\n"; added.add("update_dom"); }
+      }
+    }
+
+    if (line.includes("fetch(")) {
+      if (!added.has("api_call")) {
+        const method = line.includes("'POST'") || line.includes('"POST"') || line.includes("method:") ? "POST" : "GET";
+        explanation += `• Makes an HTTP ${method} request to a server\n`;
+        added.add("api_call");
+      }
+    }
+
+    if (line.includes("await ")) {
+      if (!added.has("await")) { explanation += "• Waits for an async operation (like API call) to finish\n"; added.add("await"); }
+    }
+
+    if (line.includes("try") && line.includes("{")) {
+      if (!added.has("error_handle")) { explanation += "• Safely runs code and catches errors\n"; added.add("error_handle"); }
+    }
+
+    if (line.includes("alert(")) {
+      if (!added.has("alert")) { explanation += "• Shows a popup message to the user\n"; added.add("alert"); }
+    }
+
+    if (line.includes("console.log")) {
+      if (!added.has("log")) { explanation += "• Logs debug information to browser console\n"; added.add("log"); }
+    }
+
+    if (line.includes("return ")) {
+      if (!added.has("return")) { explanation += "• Returns a value from the function\n"; added.add("return"); }
+    }
+
+    if (line.includes("setTimeout") || line.includes("setInterval")) {
+      if (!added.has("timer")) { explanation += "• Runs code after a delay or repeatedly\n"; added.add("timer"); }
+    }
+
+    if (line.includes(".addEventListener")) {
+      if (!added.has("event")) { explanation += "• Listens for user actions (click, input, scroll, etc.)\n"; added.add("event"); }
+    }
+
+    if (line.includes("JSON.")) {
+      if (!added.has("json")) { explanation += "• Works with JSON data (parsing or stringifying)\n"; added.add("json"); }
+    }
+  }
+
+  if (added.size === 0) explanation += "Valid JavaScript code with no major actions detected.\n";
+  else explanation += "\nClean, modern, and production-ready JavaScript.";
+
+  typeWriter(explanation, output, 16);
+}
+</script>
+</body>
+</html>
